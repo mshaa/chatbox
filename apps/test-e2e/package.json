@@ -1,0 +1,17 @@
+{
+  "name": "test-e2e",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test:e2e": "playwright test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.27.0",
+  "devDependencies": {
+    "@chatbox/persistence": "workspace:*",
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^25.0.8"
+  }
+}

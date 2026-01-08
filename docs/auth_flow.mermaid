@@ -1,0 +1,40 @@
+sequenceDiagram
+    autonumber
+    actor User as Next.js Client
+    participant Web as Next.js Server
+    participant Identity as NestJS Identity
+    participant Cookies as Next.js Cookies
+    participant Chat as NestJS Chat API / Socket
+    
+    Note over User, Web: Signin / Signup
+
+    User->>Web: submit username + password
+    Web->>Identity: POST /auth/signin
+
+    alt Existing account
+        Note over Identity: Signing in
+    else User not found on sign-in
+        Identity-->>Web: 422 Unprocessable Entity
+        Web->>Identity: POST /auth/signup
+        Note over Identity: Signing up
+    end
+
+    Identity-->>Web: Auth response { access_token, refresh_token }
+    Web->>Cookies: set token cookies
+    
+    Web-->>User: sessionId as UI app key
+    
+    alt Proxy API call
+        User->>Web: Call /api/[...proxy]
+        Web<<->>Cookies: Get access_token / Exchange refresh_token
+        Web->>Chat: Proxy API call with access_token, fallback to refresh_token on 401 once
+        
+    else Connect Socket
+        User->>Web: Auth getSocketToken action 
+        Web<<->>Cookies: Get access_token / Exchange refresh_token
+        Web<<->>Identity: Exchange access_token to socket_token, fallback to refresh_token on 401 once
+        Web-->>User: Return short lived socket_token
+        User->>Chat: Connect to web socket
+    end
+
+    

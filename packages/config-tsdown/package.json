@@ -1,0 +1,11 @@
+{
+  "name": "@chatbox/config-tsdown",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.js",
+    "./neutral": "./neutral.js",
+    "./nest": "./nest.js"
+  }
+}

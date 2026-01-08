@@ -1,0 +1,44 @@
+// Discover Docker containers
+discovery.docker "containers" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
+}
+
+// Filter and relabel for chatbox containers
+discovery.relabel "docker_logs" {
+  targets = discovery.docker.containers.targets
+
+  // Only collect containers on chatbox_network
+  rule {
+    source_labels = ["__meta_docker_network_name"]
+    regex         = "chatbox_network"
+    action        = "keep"
+  }
+
+  // Extract container name
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  // Add service label from compose (works with scaled services)
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+}
+
+// Collect logs from Docker
+loki.source.docker "docker_logs" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.docker_logs.output
+  forward_to = [loki.write.local.receiver]
+}
+
+// Send to Loki
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

@@ -1,0 +1,68 @@
+services:
+  db:
+    image: postgres:16
+    container_name: chatbox_db
+    restart: always
+    environment:
+      POSTGRES_USER: chatbox
+      POSTGRES_PASSWORD: chatbox
+      POSTGRES_DB: chatbox
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - chatbox
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chatbox"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.25.1-p0
+    container_name: chatbox_pgbouncer
+    restart: always
+    environment:
+      DATABASE_URL: postgres://chatbox:chatbox@db:5432/chatbox
+      POOL_MODE: transaction
+      AUTH_TYPE: plain
+      STATS_USERS: chatbox
+      DEFAULT_POOL_SIZE: 80
+      MAX_CLIENT_CONN: 300
+      MIN_POOL_SIZE: 10
+      RESERVE_POOL_SIZE: 5
+      SERVER_RESET_QUERY: DISCARD ALL
+    ports:
+      - "127.0.0.1:6432:5432"
+    networks:
+      - chatbox
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "localhost", "-p", "5432", "-U", "chatbox"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+      image: redis:7-alpine
+      container_name: chatbox_redis
+      restart: always
+      ports:
+        - "127.0.0.1:6379:6379"
+      volumes:
+        - redis_data:/data
+      networks:
+        - chatbox
+      # command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+
+networks:
+  chatbox:
+    name: chatbox_network
+    driver: bridge
+
+volumes:
+  pg_data:
+  redis_data:

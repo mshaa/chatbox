@@ -1,0 +1,41 @@
+sequenceDiagram
+    autonumber
+    actor User as Next.js Sender 
+    participant API as NestJS Chat API / Socket
+    participant Queue as BullMQ 
+    participant Worker as Persistence Worker
+    participant DB as PostgreSQL
+    actor Others as Room Members
+
+    Note over User, Others: All Connected (connect)
+
+    Note right of User: Writes message
+    Note left of User: Optimistically update UI
+    
+    User->>API: HTTP POST /messages
+
+    activate API
+
+    Note over API, Queue: Async Persistence Job
+    API-->>Queue: Add persistence job
+    API-->>User: 202 Accepted
+
+    deactivate API
+
+    activate Worker
+
+    Note over Queue, DB: Background Processing
+    Worker->>Queue: Process job
+    Worker->>DB: Save message
+    DB-->>Worker: Success
+    
+    Note over Worker, User: Broadcast via WebSocket
+    Worker->>API: Job complete
+    
+    deactivate Worker
+    
+    API->>User: emit "msg:received" (confirm)
+    API->>Others: emit "msg:received" (new message to connected sockets)
+    
+    Note left of User: Mark as Persisted
+    Note right of Others: Display new message

@@ -1,0 +1,20 @@
+services:
+  db-init:
+    build:
+      context: ..
+      dockerfile: docker/init.Dockerfile
+    container_name: chatbox_init
+    env_file:
+      - ../.env
+      - .env.docker
+    networks:
+      - chatbox
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+networks:
+  chatbox:
+    name: chatbox_network
+    external: true

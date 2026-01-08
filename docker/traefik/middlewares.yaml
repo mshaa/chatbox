@@ -1,0 +1,49 @@
+http:
+  middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+    rate-limit-general:
+      rateLimit:
+        average: 1000
+        burst: 200
+        period: "1m"
+
+    rate-limit-auth:
+      rateLimit:
+        average: 500
+        burst: 100
+        period: "1m"
+
+    rate-limit-socket:
+      rateLimit:
+        average: 2000
+        burst: 500
+        period: "1m"
+
+    security-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=()"
+        customResponseHeaders:
+          X-Powered-By: ""
+          Server: ""
+
+    circuit-breaker-api:
+      circuitBreaker:
+        expression: "ResponseCodeRatio(500, 600, 0, 600) > 0.30 || NetworkErrorRatio() > 0.10"
+        checkPeriod: "10s"
+        fallbackDuration: "30s"
+        recoveryDuration: "60s"
+
+    circuit-breaker-socket:
+      circuitBreaker:
+        expression: "NetworkErrorRatio() > 0.25"
+        checkPeriod: "15s"
+        fallbackDuration: "20s"
+        recoveryDuration: "45s"

@@ -1,0 +1,19 @@
+services:
+  k6:
+    image: grafana/k6:latest
+    container_name: chatbox_k6
+    networks:
+      - chatbox_network
+    environment:
+      # Direct service access (bypasses Traefik rate limiting for max throughput)
+      - K6_IDENTITY_URL=http://identity:3001
+      - K6_CHAT_URL=http://chat:3002
+      - K6_CHAT_WS_URL=ws://chat:3002/socket
+      # Prometheus remote write endpoint for Grafana export
+      - K6_PROMETHEUS_RW_SERVER_URL=http://chatbox_prometheus:9090/api/v1/write
+    volumes:
+      - ../apps/test-perf/k6:/scripts:ro
+
+networks:
+  chatbox_network:
+    external: true

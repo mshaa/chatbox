@@ -1,0 +1,78 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "stream",
+  "globalEnv": [
+    "NODE_ENV",
+    "PERSIST_*",
+    "SECURITY_*",
+    "THROTTLE_*",
+    "COOKIE_*",
+    "AUTH_*",
+    "PERSISTENCE_*",
+    "SIMULATOR_*",
+    "REDIS_*",
+    "JOB_*",
+    "CACHE_*",
+    "CHAT_*",
+    "IDENTITY_*",
+    "NEXT_PUBLIC_*",
+    "ARTILLERY_*",
+    "METRICS_*"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "src/**",
+        "package.json",
+        "tsdown.config.js",
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**"
+      ]
+    },
+    "vet": {
+      "cache": true
+    },
+    "lint": {
+      "cache": true,
+      "dependsOn": [
+        "^lint"
+      ]
+    },
+    "format": {
+      "cache": true,
+      "inputs": [
+        "**/*.{js,jsx,ts,tsx,json,css,md}"
+      ]
+    },
+    "test": {
+      "dependsOn": [
+        "kill"
+      ]
+    },
+    "dev": {
+      "dependsOn": [
+        "^build",
+        "kill"
+      ],
+      "cache": false,
+      "persistent": true
+    },
+    "dev:watch": {
+      "dependsOn": [
+        "^build",
+        "kill"
+      ],
+      "cache": false,
+      "persistent": true
+    },
+    "kill": {
+      "cache": false
+    }
+  }
+}

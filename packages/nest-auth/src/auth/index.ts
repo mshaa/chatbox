@@ -1,0 +1,6 @@
+export * from './auth.module'
+export * from './auth.service'
+export * from './guards/auth.guard'
+export { GuestOnly } from './guards/auth.guard'
+export type { AuthRequest, UserJwtPayload } from './types'
+export { Scopes, type Scope } from './scopes'

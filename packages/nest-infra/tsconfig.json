@@ -1,0 +1,6 @@
+{
+  "extends": "@chatbox/config-typescript/nest",
+  "compilerOptions": {
+    "outDir": "./dist"
+  }
+}

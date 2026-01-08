@@ -1,0 +1,38 @@
+{
+  "name": "@chatbox/nest-persistence",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./src/index.ts",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "vet": "tsc --noEmit",
+    "lint": "eslint",
+    "format": "prettier --write . --ignore-path ../../.gitignore"
+  },
+  "dependencies": {
+    "@chatbox/contracts": "workspace:*",
+    "@chatbox/nest-infra": "workspace:*",
+    "@chatbox/persistence": "workspace:*",
+    "@nestjs/common": "^11.0.0",
+    "drizzle-orm": "^0.44.7",
+    "pg": "^8.16.0",
+    "postgres": "^3.4.8",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@chatbox/config-eslint": "workspace:*",
+    "@chatbox/config-prettier": "workspace:*",
+    "@chatbox/config-tsdown": "workspace:*",
+    "@chatbox/config-typescript": "workspace:*",
+    "@types/pg": "^8.16.0",
+    "eslint": "^9.39.2"
+  }
+}

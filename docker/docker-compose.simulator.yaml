@@ -1,0 +1,28 @@
+services:
+  simulator:
+    build:
+      context: ..
+      dockerfile: docker/nestjs.Dockerfile
+      args:
+        SERVICE_NAME: simulator
+    container_name: chatbox_simulator
+    env_file:
+      - ../.env
+      - .env.docker
+    networks:
+      - chatbox
+    deploy:
+      restart_policy:
+        condition: any
+        delay: 10s
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          memory: 128M
+
+networks:
+  chatbox:
+    name: chatbox_network
+    external: true

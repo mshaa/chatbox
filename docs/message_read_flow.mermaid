@@ -1,0 +1,38 @@
+sequenceDiagram
+    autonumber
+    actor User as Next.js Reader
+    participant API as NestJS Chat API / Socket
+    participant Queue as BullMQ
+    participant Worker as Persistence Worker
+    participant DB as PostgreSQL
+
+    Note left of User: Debounced Scroll / Blur
+
+    User->>API: HTTP POST /rooms/:roomId/read
+
+    alt Strategy: Direct Persistence
+        activate API
+
+        API->>DB: Persist last-read cursor
+        API-->>User: 200 OK
+    else Strategy: Write-Behind
+        API->>Queue: Buffer latest read cursor
+        API->>Queue: Mark read state dirty
+        API-->>User: 200 OK
+        
+        deactivate API
+
+        activate Worker
+
+        Note over Queue, DB: Background Recurring Sync (SYNC_LAST_READ_JOB)
+        Worker->>Queue: Pick up dirty read cursors
+        Worker->>DB: Persist read cursors as batch
+
+        Worker->>Queue: Re-enqueue SYNC_LAST_READ_JOB
+
+        deactivate Worker
+    end
+    
+    Note left of User: Read state reflected on next sync
+
+    

@@ -1,0 +1,10 @@
+<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="10" width="40" height="35" rx="4" fill="#7289DA" /> <path d="M35 45 L45 55 L45 40 Z" fill="#7289DA" />
+  
+  <circle cx="25" cy="27" r="5" fill="white" />
+  <circle cx="25" cy="27" r="2" fill="#7289DA" />
+
+  <text x="55" y="42" font-family="Arial, sans-serif" font-weight="bold" font-size="30" fill="#FFFFFF">
+    Chat<tspan fill="#7289DA">box</tspan>
+  </text>
+</svg>

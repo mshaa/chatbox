@@ -1,0 +1,54 @@
+{
+  "name": "@chatbox/persistence",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    "./seed": {
+      "development": "./src/seed/index.ts",
+      "types": "./src/seed/index.ts",
+      "import": "./dist/seed/index.js",
+      "require": "./dist/seed/index.cjs"
+    },
+    "./schema": {
+      "development": "./src/schema/index.ts",
+      "types": "./src/schema/index.ts",
+      "import": "./dist/schema/index.js",
+      "require": "./dist/schema/index.cjs"
+    },
+    "./tools": {
+      "development": "./src/tools/index.ts",
+      "types": "./src/tools/index.ts",
+      "import": "./dist/tools/index.js",
+      "require": "./dist/tools/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "vet": "tsc --noEmit",
+    "push": "drizzle-kit push",
+    "seed": "tsx src/scripts/run-seed",
+    "seed:full": "tsx src/scripts/run-seed full",
+    "lint": "eslint",
+    "format": "prettier --write . --ignore-path ../../.gitignore"
+  },
+  "dependencies": {
+    "@chatbox/config": "workspace:*",
+    "drizzle-orm": "^0.44.7",
+    "pg": "^8.16.3",
+    "postgres": "^3.4.8"
+  },
+  "devDependencies": {
+    "@chatbox/config-eslint": "workspace:*",
+    "@chatbox/config-prettier": "workspace:*",
+    "@chatbox/config-tsdown": "workspace:*",
+    "@chatbox/config-typescript": "workspace:*",
+    "@types/pg": "^8.16.0",
+    "argon2": "^0.44.0",
+    "drizzle-kit": "^0.31.8",
+    "eslint": "^9.39.2",
+    "uuid": "^11.0.0"
+  }
+}

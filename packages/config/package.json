@@ -1,0 +1,53 @@
+{
+  "name": "@chatbox/config",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    "./server": {
+      "development": "./src/server.ts",
+      "types": "./src/server.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
+    },
+    "./web": {
+      "development": "./src/web.ts",
+      "types": "./src/web.ts",
+      "import": "./dist/web.js",
+      "require": "./dist/web.cjs"
+    },
+    "./bff": {
+      "development": "./src/bff.ts",
+      "types": "./src/bff.ts",
+      "import": "./dist/bff.js",
+      "require": "./dist/bff.cjs"
+    },
+    "./simulator": {
+      "development": "./src/simulator.ts",
+      "types": "./src/simulator.ts",
+      "import": "./dist/simulator.js",
+      "require": "./dist/simulator.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "vet": "tsc --noEmit",
+    "lint": "eslint",
+    "format": "prettier --write . --ignore-path ../../.gitignore"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "zod": "^4.3.5",
+    "zod-config": "^1.4.0"
+  },
+  "devDependencies": {
+    "@chatbox/config-eslint": "workspace:*",
+    "@chatbox/config-prettier": "workspace:*",
+    "@chatbox/config-tsdown": "workspace:*",
+    "@chatbox/config-typescript": "workspace:*",
+    "@types/node": "^25.0.9",
+    "eslint": "^9.39.2"
+  }
+}

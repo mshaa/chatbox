@@ -1,0 +1,43 @@
+{
+  "name": "@chatbox/nest-infra",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./src/index.ts",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "vet": "tsc --noEmit",
+    "lint": "eslint",
+    "format": "prettier --write . --ignore-path ../../.gitignore"
+  },
+  "dependencies": {
+    "@chatbox/contracts": "workspace:*",
+    "@chatbox/config": "workspace:*",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.0.0",
+    "@willsoto/nestjs-prometheus": "^6.0.1",
+    "express": "^4.19.2",
+    "ioredis": "^5.4.1",
+    "nestjs-pino": "^4.5.0",
+    "nestjs-zod": "^5.0.1",
+    "prom-client": "^15.1.3",
+    "rxjs": "^7.8.2",
+    "zod": "^4.3.2"
+  },
+  "devDependencies": {
+    "@chatbox/config-eslint": "workspace:*",
+    "@chatbox/config-prettier": "workspace:*",
+    "@chatbox/config-tsdown": "workspace:*",
+    "@chatbox/config-typescript": "workspace:*",
+    "eslint": "^9.39.2",
+    "pino-pretty": "^11.0.0"
+  }
+}

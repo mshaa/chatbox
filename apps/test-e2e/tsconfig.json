@@ -1,0 +1,6 @@
+{
+  "extends": "@chatbox/config-typescript/base",
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+}

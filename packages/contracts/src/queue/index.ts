@@ -1,0 +1,5 @@
+export * from './job.schema'
+export const PERSISTENCE_QUEUE = 'persistence'
+export const PERSIST_MESSAGE_JOB = 'message:persist'
+export const MESSAGE_PERSISTED_EVENT = 'message:persisted'
+export const SYNC_LAST_READ_JOB = 'last-read:sync'

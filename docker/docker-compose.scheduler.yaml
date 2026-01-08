@@ -1,0 +1,48 @@
+services:
+  ofelia:
+    image: mcuadros/ofelia:latest
+    container_name: chatbox_scheduler
+    command: daemon --docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - chatbox
+    env_file:
+      - .env.docker
+    labels:
+      # Database seed - every 30 minutes
+      ofelia.job-run.db-seed.schedule: "@every 30m"
+      ofelia.job-run.db-seed.image: "docker-db-init"
+      ofelia.job-run.db-seed.network: "chatbox_network"
+      ofelia.job-run.db-seed.delete: "true"
+      ofelia.job-run.db-seed.environment: "PERSISTENCE_STORAGE_URL=${PERSISTENCE_STORAGE_URL}"
+
+      # Restart Loki (tmpfs clears data)
+      ofelia.job-exec.loki-reset.schedule: "@every 30m"
+      ofelia.job-exec.loki-reset.container: "chatbox_loki"
+      ofelia.job-exec.loki-reset.command: "kill 1"
+
+      # Restart Prometheus (tmpfs clears data)
+      ofelia.job-exec.prom-reset.schedule: "@every 30m"
+      ofelia.job-exec.prom-reset.container: "chatbox_prometheus"
+      ofelia.job-exec.prom-reset.command: "kill 1"
+
+      # Restart Redis (clears data)
+      ofelia.job-exec.redis-reset.schedule: "@every 30m"
+      ofelia.job-exec.redis-reset.container: "chatbox_redis"
+      ofelia.job-exec.redis-reset.command: "kill 1"
+
+      # Restart Simulator
+      ofelia.job-exec.simulator-reset.schedule: "@every 30m"
+      ofelia.job-exec.simulator-reset.container: "chatbox_simulator"
+      ofelia.job-exec.simulator-reset.command: "kill 1"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+
+networks:
+  chatbox:
+    name: chatbox_network
+    external: true

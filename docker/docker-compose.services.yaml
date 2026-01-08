@@ -1,0 +1,232 @@
+services:
+  traefik:
+    image: traefik:v3.6
+    container_name: chatbox_traefik
+    command:
+      - "--api.insecure=true"
+      - "--ping=true"
+      - "--metrics.prometheus=true"
+      - "--log.level=DEBUG"
+      - "--accesslog=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.identity.address=:3001"
+      - "--entrypoints.chat.address=:3002"
+      - "--entrypoints.grafana.address=:3030"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "3030:3030"           # Grafana
+      - "127.0.0.1:8080:8080"  # Traefik dashboard - localhost only
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/middlewares.yaml:/etc/traefik/dynamic/middlewares.yaml:ro
+      - ./traefik/tls.yaml:/etc/traefik/dynamic/tls.yaml:ro
+      - ./traefik/certs:/etc/traefik/certs:ro
+    networks:
+      - chatbox
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 60s
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  identity:
+    build:
+      context: ..
+      dockerfile: docker/nestjs.Dockerfile
+      args:
+        SERVICE_NAME: identity
+    env_file:
+      - ../.env
+      - .env.docker
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.identity.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.identity.entrypoints=identity"
+      - "traefik.http.routers.identity.middlewares=rate-limit-auth@file,security-headers@file,circuit-breaker-api@file"
+      - "traefik.http.services.identity.loadbalancer.server.port=3001"
+    networks:
+      - chatbox
+    depends_on:
+      - traefik
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 60s
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  chat:
+    build:
+      context: ..
+      dockerfile: docker/nestjs.Dockerfile
+      args:
+        SERVICE_NAME: chat
+    env_file:
+      - ../.env
+      - .env.docker
+    labels:
+      - "traefik.enable=true"
+      # Direct access via :3002 (for service-to-service)
+      - "traefik.http.routers.chat-api.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.chat-api.entrypoints=chat"
+      - "traefik.http.routers.chat-api.service=chat"
+      - "traefik.http.routers.chat-api.middlewares=rate-limit-general@file,security-headers@file,circuit-breaker-api@file"
+      # Socket.io connections (handshake + WebSocket namespace) on custom path
+      # Backend serves on path=/socket, namespace=/chat
+      # Route /socket/* to chat service without stripping
+      # Must have higher priority than web router's catch-all PathPrefix(`/`)
+      # HTTPS router for Socket.io
+      - "traefik.http.routers.chat-socket.rule=PathPrefix(`/socket`)"
+      - "traefik.http.routers.chat-socket.entrypoints=websecure"
+      - "traefik.http.routers.chat-socket.tls=true"
+      - "traefik.http.routers.chat-socket.priority=100"
+      - "traefik.http.routers.chat-socket.service=chat"
+      - "traefik.http.routers.chat-socket.middlewares=rate-limit-socket@file,security-headers@file,circuit-breaker-socket@file"
+      # HTTP to HTTPS redirect for Socket.io
+      - "traefik.http.routers.chat-socket-http.rule=PathPrefix(`/socket`)"
+      - "traefik.http.routers.chat-socket-http.entrypoints=web"
+      - "traefik.http.routers.chat-socket-http.priority=100"
+      - "traefik.http.routers.chat-socket-http.middlewares=redirect-to-https@file"
+      # Service definition (shared by all routers)
+      - "traefik.http.services.chat.loadbalancer.server.port=3002"
+    networks:
+      - chatbox
+    depends_on:
+      - traefik
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 60s
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  persister:
+    build:
+      context: ..
+      dockerfile: docker/nestjs.Dockerfile
+      args:
+        SERVICE_NAME: persister
+    env_file:
+      - ../.env
+      - .env.docker
+    networks:
+      - chatbox
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 60s
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3003/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/nextjs.Dockerfile
+      args:
+        SERVICE_NAME: web
+        NEXT_PUBLIC_WEBSOCKET_URL: ${NEXT_PUBLIC_WEBSOCKET_URL}
+        NEXT_PUBLIC_WEBSOCKET_PATH: ${NEXT_PUBLIC_WEBSOCKET_PATH}
+        NEXT_PUBLIC_PAGE_SIZE: ${NEXT_PUBLIC_PAGE_SIZE}
+        NEXT_PUBLIC_AUTH_SOCKET_TOKEN_EXPIRES_IN_SEC: ${NEXT_PUBLIC_AUTH_SOCKET_TOKEN_EXPIRES_IN_SEC}
+    env_file:
+      - ../.env
+      - .env.docker
+    labels:
+      - "traefik.enable=true"
+      # HTTPS router
+      - "traefik.http.routers.web.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.tls=true"
+      - "traefik.http.routers.web.priority=1"
+      - "traefik.http.routers.web.middlewares=rate-limit-general@file,security-headers@file,circuit-breaker-api@file"
+      # HTTP to HTTPS redirect
+      - "traefik.http.routers.web-http.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.web-http.entrypoints=web"
+      - "traefik.http.routers.web-http.priority=1"
+      - "traefik.http.routers.web-http.middlewares=redirect-to-https@file"
+      # Service
+      - "traefik.http.services.web.loadbalancer.server.port=3000"
+    networks:
+      - chatbox
+    depends_on:
+      - traefik
+      - identity
+      - chat
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 60s
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+networks:
+  chatbox:
+    name: chatbox_network
+    external: true
